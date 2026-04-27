@@ -30,6 +30,12 @@ export type MemberProfile = {
   specialties: string[];
   interests: string[];
   contactVisibility: "directory" | "taskforce-only";
+  institutions: string;
+  additionalCredentials: string | null;
+  organizationWebsite: string | null;
+  industryExperience: string;
+  wantsResume: boolean;
+  resumePath: string | null;
 };
 
 export type BusinessProfile = {
@@ -62,6 +68,24 @@ export type SectionSlug =
   | "job-opportunities"
   | "startup-think-tank"
   | "seniors";
+
+export type ExperienceLevel = "internship" | "entry" | "mid" | "senior" | "executive";
+
+export type JobListing = {
+  id: string;
+  title: string;
+  company: string;
+  industry: string;
+  experienceLevel: ExperienceLevel;
+  location: string;
+  type: "full-time" | "part-time" | "contract" | "internship";
+  description: string;
+  contactEmail: string;
+  applicationUrl: string | null;
+  status: ApprovalStatus;
+  requestedBy: string;
+  requestedAt: string;
+};
 
 export type SectionContent = {
   id: string;

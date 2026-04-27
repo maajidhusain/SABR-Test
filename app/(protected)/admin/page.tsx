@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { DashboardShell } from "@/components/dashboard-shell";
 import { requireTaskforce } from "@/lib/auth";
-import { getDirectoryBundle } from "@/lib/data";
+import { getDirectoryBundle, getJobListings } from "@/lib/data";
 import { hasSupabaseEnv } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -17,6 +17,20 @@ async function updateRequestStatus(formData: FormData) {
   const status = String(formData.get("status") ?? "pending");
   const supabase = await createSupabaseServerClient();
   await supabase?.from("access_requests").update({ status }).eq("id", id);
+  redirect("/admin");
+}
+
+async function updateJobStatus(formData: FormData) {
+  "use server";
+
+  if (!hasSupabaseEnv()) {
+    return;
+  }
+
+  const id = String(formData.get("id") ?? "");
+  const status = String(formData.get("status") ?? "pending");
+  const supabase = await createSupabaseServerClient();
+  await supabase?.from("job_listings").update({ status }).eq("id", id);
   redirect("/admin");
 }
 
@@ -43,9 +57,22 @@ async function createSectionItem(formData: FormData) {
   redirect("/admin");
 }
 
+const TYPE_LABELS: Record<string, string> = {
+  "full-time": "Full-time",
+  "part-time": "Part-time",
+  contract: "Contract",
+  internship: "Internship",
+};
+
 export default async function AdminPage() {
   const viewer = await requireTaskforce();
-  const { accessRequests, sections } = await getDirectoryBundle();
+  const [{ accessRequests, sections }, allJobs] = await Promise.all([
+    getDirectoryBundle(),
+    getJobListings(),
+  ]);
+
+  const pendingJobs = allJobs.filter((j) => j.status === "pending");
+  const rejectedJobs = allJobs.filter((j) => j.status === "rejected");
 
   return (
     <DashboardShell
@@ -57,6 +84,11 @@ export default async function AdminPage() {
         <section className="card" style={{ padding: "1.4rem" }}>
           <h2 style={{ marginTop: 0 }}>Pending access requests</h2>
           <div className="grid">
+            {accessRequests.length === 0 && (
+              <p className="section-copy" style={{ color: "var(--mute)", fontStyle: "italic" }}>
+                No pending requests.
+              </p>
+            )}
             {accessRequests.map((request) => (
               <article key={request.id} style={{ paddingTop: "1rem", borderTop: "1px solid var(--line)" }}>
                 <strong>{request.fullName}</strong>
@@ -115,6 +147,77 @@ export default async function AdminPage() {
           </form>
         </section>
       </div>
+
+      {/* Job listing review */}
+      <section className="card" style={{ padding: "1.4rem", marginTop: "1.5rem" }}>
+        <h2 style={{ marginTop: 0 }}>Job listing review</h2>
+
+        {pendingJobs.length === 0 && rejectedJobs.length === 0 && (
+          <p className="section-copy" style={{ color: "var(--mute)", fontStyle: "italic" }}>
+            No pending or rejected listings.
+          </p>
+        )}
+
+        {pendingJobs.length > 0 && (
+          <>
+            <h3 style={{ marginTop: 0, marginBottom: "0.8rem", fontSize: 13, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--mute)", fontFamily: "var(--mono)" }}>
+              Awaiting review — {pendingJobs.length}
+            </h3>
+            <div className="grid" style={{ marginBottom: rejectedJobs.length > 0 ? "1.8rem" : 0 }}>
+              {pendingJobs.map((job) => (
+                <article key={job.id} style={{ paddingTop: "1rem", borderTop: "1px solid var(--line)" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "0.6rem", flexWrap: "wrap" }}>
+                    <strong>{job.title}</strong>
+                    <span className="tag job-status-pending">pending</span>
+                  </div>
+                  <p className="section-copy" style={{ marginTop: "0.3rem" }}>
+                    {job.company} · {TYPE_LABELS[job.type]} · {job.location}
+                  </p>
+                  <p className="section-copy">{job.industry} · Requested {job.requestedAt}</p>
+                  <p className="section-copy" style={{ marginTop: "0.4rem" }}>{job.description}</p>
+                  <form action={updateJobStatus} style={{ display: "flex", gap: "0.7rem", flexWrap: "wrap", marginTop: "0.7rem" }}>
+                    <input type="hidden" name="id" value={job.id} />
+                    <button className="button button-secondary" name="status" value="approved" type="submit">
+                      Approve
+                    </button>
+                    <button className="button button-danger" name="status" value="rejected" type="submit">
+                      Reject
+                    </button>
+                  </form>
+                </article>
+              ))}
+            </div>
+          </>
+        )}
+
+        {rejectedJobs.length > 0 && (
+          <>
+            <h3 style={{ marginTop: 0, marginBottom: "0.8rem", fontSize: 13, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--mute)", fontFamily: "var(--mono)" }}>
+              Rejected — {rejectedJobs.length}
+            </h3>
+            <div className="grid">
+              {rejectedJobs.map((job) => (
+                <article key={job.id} style={{ paddingTop: "1rem", borderTop: "1px solid var(--line)", opacity: 0.7 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "0.6rem", flexWrap: "wrap" }}>
+                    <strong>{job.title}</strong>
+                    <span className="tag job-status-rejected">rejected</span>
+                  </div>
+                  <p className="section-copy" style={{ marginTop: "0.3rem" }}>
+                    {job.company} · {TYPE_LABELS[job.type]} · {job.location}
+                  </p>
+                  <p className="section-copy">{job.industry} · Requested {job.requestedAt}</p>
+                  <form action={updateJobStatus} style={{ display: "flex", gap: "0.7rem", flexWrap: "wrap", marginTop: "0.7rem" }}>
+                    <input type="hidden" name="id" value={job.id} />
+                    <button className="button button-secondary" name="status" value="approved" type="submit">
+                      Re-approve
+                    </button>
+                  </form>
+                </article>
+              ))}
+            </div>
+          </>
+        )}
+      </section>
     </DashboardShell>
   );
 }

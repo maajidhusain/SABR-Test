@@ -25,6 +25,12 @@ async function requestAccessAction(formData: FormData) {
     return;
   }
 
+  const dob = new Date(String(formData.get("dateOfBirth") ?? ""));
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) age--;
+
   const requestId = crypto.randomUUID();
   let resumePath: string | null = null;
   let headshotPath: string | null = null;
@@ -53,7 +59,7 @@ async function requestAccessAction(formData: FormData) {
     full_name: String(formData.get("fullName") ?? ""),
     date_of_birth: String(formData.get("dateOfBirth") ?? ""),
     gender: String(formData.get("gender") ?? ""),
-    age: Number(formData.get("age") ?? 0),
+    age,
     phone_number: String(formData.get("phoneNumber") ?? ""),
     work_number: String(formData.get("workNumber") ?? "") || null,
     professional_email: String(formData.get("professionalEmail") ?? "") || null,
@@ -146,28 +152,24 @@ export default async function RequestAccessPage() {
             </div>
             <div className="two-col">
               <label className="label">
-                Age
-                <input className="field" name="age" type="number" min="0" required />
-              </label>
-              <label className="label">
                 Phone Number (US only)
                 <input className="field" name="phoneNumber" type="tel" required />
               </label>
-            </div>
-            <div className="two-col">
               <label className="label">
                 Work Number (US only)
                 <input className="field" name="workNumber" type="tel" />
               </label>
+            </div>
+            <div className="two-col">
               <label className="label">
                 Email (professional/work)
                 <input className="field" name="professionalEmail" type="email" />
               </label>
+              <label className="label">
+                LinkedIn Profile Link
+                <input className="field" name="linkedinProfile" type="url" />
+              </label>
             </div>
-            <label className="label">
-              LinkedIn Profile Link
-              <input className="field" name="linkedinProfile" type="url" />
-            </label>
             <fieldset style={{ border: "1px solid var(--line)", borderRadius: "18px", padding: "1rem" }}>
               <legend style={{ padding: "0 0.4rem", color: "var(--muted)" }}>
                 Preferred Contact Method

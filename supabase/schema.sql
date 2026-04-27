@@ -31,7 +31,13 @@ create table if not exists public.member_profiles (
   industry text not null,
   specialties text[] not null default '{}',
   interests text[] not null default '{}',
-  contact_visibility text not null default 'directory'
+  contact_visibility text not null default 'directory',
+  institutions text not null default '',
+  additional_credentials text,
+  organization_website text,
+  industry_experience text not null default '',
+  wants_resume boolean not null default false,
+  resume_path text
 );
 
 create table if not exists public.business_profiles (
@@ -175,6 +181,13 @@ to authenticated
 using (public.is_taskforce())
 with check (public.is_taskforce());
 
+create policy "members can update own member profile"
+on public.member_profiles
+for update
+to authenticated
+using (profile_id = auth.uid())
+with check (profile_id = auth.uid());
+
 create policy "taskforce can manage business profiles"
 on public.business_profiles
 for all
@@ -212,3 +225,20 @@ with check (public.is_taskforce());
 insert into public.metro_areas (slug, name, region, is_active)
 values ('chicagoland', 'Chicagoland', 'Illinois', true)
 on conflict (slug) do nothing;
+
+-- Migration: extend member_profiles with profile-edit fields
+-- (no-op if columns already exist from the CREATE TABLE above)
+alter table public.member_profiles
+  add column if not exists institutions text not null default '',
+  add column if not exists additional_credentials text,
+  add column if not exists organization_website text,
+  add column if not exists industry_experience text not null default '',
+  add column if not exists wants_resume boolean not null default false,
+  add column if not exists resume_path text;
+
+create policy if not exists "members can update own member profile"
+on public.member_profiles
+for update
+to authenticated
+using (profile_id = auth.uid())
+with check (profile_id = auth.uid());

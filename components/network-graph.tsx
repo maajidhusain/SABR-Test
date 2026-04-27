@@ -12,17 +12,17 @@ type SimulationNode = RelationshipNode & {
 };
 
 const nodeFill: Record<RelationshipNode["kind"], string> = {
-  viewer: "#60a5fa",
-  member: "#4ade80",
-  business: "#a78bfa",
-  student: "#34d399"
+  viewer:   "#1f3a2e",
+  member:   "#a8542a",
+  business: "#6b8068",
+  student:  "#b08840"
 };
 
 const nodeLabels: Record<RelationshipNode["kind"], string> = {
-  viewer: "You",
-  member: "Member",
+  viewer:   "You",
+  member:   "Member",
   business: "Business",
-  student: "Student"
+  student:  "Student"
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -238,8 +238,8 @@ export function NetworkGraphView({ graph }: { graph: NetworkGraph }) {
         context.lineTo(target.x, target.y);
         context.strokeStyle =
           selectedNodeId === source.id || selectedNodeId === target.id
-            ? "rgba(96, 165, 250, 0.5)"
-            : "rgba(255, 255, 255, 0.12)";
+            ? "rgba(168, 84, 42, 0.55)"
+            : "rgba(31, 58, 46, 0.18)";
         context.lineWidth = edge.score > 0 ? 1 + edge.score * 0.35 : 1.2;
         context.stroke();
       }
@@ -260,19 +260,19 @@ export function NetworkGraphView({ graph }: { graph: NetworkGraph }) {
         context.globalAlpha = 1;
 
         if (selected || hovered) {
-          context.strokeStyle = "rgba(255, 255, 255, 0.9)";
-          context.lineWidth = 4;
+          context.strokeStyle = "rgba(31, 58, 46, 0.5)";
+          context.lineWidth = 3;
           context.stroke();
         }
 
-        context.fillStyle = "rgba(255,255,255,0.95)";
-        context.font = `${node.kind === "viewer" ? 700 : 600} ${selected ? 12 : 11}px Inter, system-ui, sans-serif`;
+        context.fillStyle = "#1f3a2e";
+        context.font = `${node.kind === "viewer" ? 600 : 500} ${selected ? 12 : 11}px "Source Serif 4", Georgia, serif`;
         context.textAlign = "center";
         context.textBaseline = "middle";
         const label = node.label.length > 16 ? `${node.label.slice(0, 16)}…` : node.label;
         context.fillText(label, node.x, node.y - 2);
 
-        context.fillStyle = "rgba(255,255,255,0.6)";
+        context.fillStyle = "#7a7268";
         context.font = "10px Inter, system-ui, sans-serif";
         context.fillText(nodeLabels[node.kind], node.x, node.y + 12);
       }
