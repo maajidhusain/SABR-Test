@@ -47,7 +47,7 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
         </button>
 
         {viewer ? (
-          <Link href="/logout" className="topbar-avatar" aria-label="Account">
+          <Link href="/profile" className="topbar-avatar" aria-label="My profile">
             {initials}
           </Link>
         ) : (

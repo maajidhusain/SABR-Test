@@ -31,6 +31,7 @@ export type MemberProfile = {
   interests: string[];
   contactVisibility: "directory" | "taskforce-only";
   institutions: string;
+  masjidAffiliation: string;
   additionalCredentials: string | null;
   organizationWebsite: string | null;
   industryExperience: string;

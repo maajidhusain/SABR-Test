@@ -18,6 +18,7 @@ function mapMemberProfileRow(row: Record<string, unknown>): MemberProfile {
     interests: (row.interests as string[]) ?? [],
     contactVisibility: ((row.contact_visibility ?? row.contactVisibility) as "directory" | "taskforce-only") ?? "directory",
     institutions: ((row.institutions as string) ?? ""),
+    masjidAffiliation: ((row.masjid_affiliation ?? row.masjidAffiliation) as string) ?? "",
     additionalCredentials: ((row.additional_credentials ?? row.additionalCredentials) as string | null) ?? null,
     organizationWebsite: ((row.organization_website ?? row.organizationWebsite) as string | null) ?? null,
     industryExperience: ((row.industry_experience ?? row.industryExperience) as string) ?? "",
