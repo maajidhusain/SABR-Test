@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { getViewer } from "@/lib/auth";
 import { hasSupabaseEnv } from "@/lib/env";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 async function requestAccessAction(formData: FormData) {
@@ -14,12 +13,7 @@ async function requestAccessAction(formData: FormData) {
   }
 
   const supabase = await createSupabaseServerClient();
-  const adminClient = createSupabaseAdminClient();
   const preferredContactMethods = formData.getAll("preferredContactMethods").map(String);
-  const resume = formData.get("resume") as File | null;
-  const headshot = formData.get("headshot") as File | null;
-  const resumeProvided = resume && resume.size > 0;
-  const headshotProvided = headshot && headshot.size > 0;
 
   if (!preferredContactMethods.length) {
     return;
@@ -31,30 +25,10 @@ async function requestAccessAction(formData: FormData) {
   const monthDiff = today.getMonth() - dob.getMonth();
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) age--;
 
-  const requestId = crypto.randomUUID();
-  let resumePath: string | null = null;
-  let headshotPath: string | null = null;
-
-  if (adminClient && resumeProvided) {
-    const resumeExt = resume.name.split(".").pop() ?? "pdf";
-    resumePath = `access-requests/${requestId}/resume.${resumeExt}`;
-    await adminClient.storage.from("request-files").upload(resumePath, resume, {
-      contentType: resume.type || "application/octet-stream",
-      upsert: true
-    });
-  }
-
-  if (adminClient && headshotProvided) {
-    const headshotExt = headshot.name.split(".").pop() ?? "jpg";
-    headshotPath = `access-requests/${requestId}/headshot.${headshotExt}`;
-    await adminClient.storage.from("request-files").upload(headshotPath, headshot, {
-      contentType: headshot.type || "application/octet-stream",
-      upsert: true
-    });
-  }
+  const resumePath = String(formData.get("resumeLink") ?? "") || null;
+  const headshotPath = String(formData.get("headshotLink") ?? "") || null;
 
   await supabase?.from("access_requests").insert({
-    id: requestId,
     email: String(formData.get("email") ?? ""),
     full_name: String(formData.get("fullName") ?? ""),
     date_of_birth: String(formData.get("dateOfBirth") ?? ""),
@@ -223,12 +197,18 @@ export default async function RequestAccessPage() {
             </label>
             <div className="two-col">
               <label className="label">
-                CV/Resume upload
-                <input className="field" name="resume" type="file" accept=".pdf,.doc,.docx" />
+                CV / Resume (Google Drive link)
+                <span style={{ color: "var(--muted)", fontSize: "0.78rem", marginLeft: "0.4rem" }}>
+                  Share your file and paste the link
+                </span>
+                <input className="field" name="resumeLink" type="url" placeholder="https://drive.google.com/..." />
               </label>
               <label className="label">
-                Headshot upload
-                <input className="field" name="headshot" type="file" accept=".pdf,image/*" />
+                Headshot (Google Drive link)
+                <span style={{ color: "var(--muted)", fontSize: "0.78rem", marginLeft: "0.4rem" }}>
+                  Share your photo and paste the link
+                </span>
+                <input className="field" name="headshotLink" type="url" placeholder="https://drive.google.com/..." />
               </label>
             </div>
             <fieldset style={{ border: "1px solid var(--line)", borderRadius: "18px", padding: "1rem" }}>

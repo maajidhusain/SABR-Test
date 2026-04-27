@@ -4,7 +4,6 @@ import { requireViewer } from "@/lib/auth";
 import { getMemberProfile } from "@/lib/data";
 import { hasSupabaseEnv } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { DashboardShell } from "@/components/dashboard-shell";
 
 async function updateProfileAction(formData: FormData) {
@@ -14,22 +13,8 @@ async function updateProfileAction(formData: FormData) {
   const viewer = await rv();
 
   const wantsResume = formData.get("wantsResume") === "yes";
-  const resumeFile = formData.get("resume") as File | null;
-  const resumeProvided = resumeFile && resumeFile.size > 0;
-
-  let resumePath: string | null = null;
-
-  if (wantsResume && resumeProvided) {
-    const adminClient = createSupabaseAdminClient();
-    if (adminClient) {
-      const ext = resumeFile.name.split(".").pop() ?? "pdf";
-      resumePath = `member-profiles/${viewer.id}/resume.${ext}`;
-      await adminClient.storage.from("request-files").upload(resumePath, resumeFile, {
-        contentType: resumeFile.type || "application/octet-stream",
-        upsert: true
-      });
-    }
-  }
+  const resumeLink = String(formData.get("resumeLink") ?? "") || null;
+  const resumePath = wantsResume ? resumeLink : null;
 
   if (!hasSupabaseEnv()) {
     redirect("/profile?saved=1");
@@ -45,14 +30,9 @@ async function updateProfileAction(formData: FormData) {
       location: String(formData.get("location") ?? ""),
       organization_website: String(formData.get("organizationWebsite") ?? "") || null,
       industry_experience: String(formData.get("industryExperience") ?? ""),
-      wants_resume: wantsResume
+      wants_resume: wantsResume,
+      resume_path: resumePath
     };
-
-    if (resumePath) {
-      updatePayload.resume_path = resumePath;
-    } else if (!wantsResume) {
-      updatePayload.resume_path = null;
-    }
 
     await supabase
       .from("member_profiles")
@@ -213,13 +193,17 @@ export default async function ProfilePage({
               </label>
             </div>
             <label className="label" style={{ marginBottom: 0 }}>
-              Upload CV / Resume (PDF or Word)
-              {profile.resumePath && (
-                <span style={{ color: "var(--primary)", fontSize: "0.8rem", marginLeft: "0.5rem" }}>
-                  — file on file
-                </span>
-              )}
-              <input className="field" name="resume" type="file" accept=".pdf,.doc,.docx" />
+              CV / Resume (Google Drive link)
+              <span style={{ color: "var(--muted)", fontSize: "0.78rem", marginLeft: "0.4rem" }}>
+                Share your file and paste the link
+              </span>
+              <input
+                className="field"
+                name="resumeLink"
+                type="url"
+                placeholder="https://drive.google.com/..."
+                defaultValue={profile.resumePath ?? ""}
+              />
             </label>
           </fieldset>
 
