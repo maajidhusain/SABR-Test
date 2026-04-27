@@ -28,6 +28,10 @@ Run the SQL in [supabase/schema.sql](supabase/schema.sql) against your Supabase 
 
 Create a Supabase storage bucket named `request-files` before testing the full join form, since resume and headshot uploads are stored there.
 
+## Docs
+
+- [Network graph — how nodes and scoring work](docs/network-graph.md)
+
 ## Estimated cost
 
 - Supabase Pro: about `$25/month`
