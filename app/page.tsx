@@ -1,16 +1,5 @@
-import { Hero } from "@/components/hero";
-import { MetricStrip } from "@/components/metric-strip";
-import { SiteHeader } from "@/components/site-header";
-import { getViewer } from "@/lib/auth";
+import { LandingPage } from "@/components/landing-page";
 
-export default async function HomePage() {
-  const viewer = await getViewer();
-
-  return (
-    <>
-      <SiteHeader viewer={viewer} />
-      <Hero />
-      <MetricStrip />
-    </>
-  );
+export default function Page() {
+  return <LandingPage />;
 }
