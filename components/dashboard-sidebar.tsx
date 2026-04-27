@@ -161,7 +161,7 @@ export function DashboardSidebar({ viewer }: { viewer: Viewer }) {
         ))}
       </div>
 
-      <div className="side-foot">
+      <Link href="/profile" className="side-foot">
         <div className="side-foot-avatar">{initials}</div>
         <div style={{ minWidth: 0 }}>
           <div className="side-foot-name">{viewer.name}</div>
@@ -169,7 +169,7 @@ export function DashboardSidebar({ viewer }: { viewer: Viewer }) {
             {viewer.role === "taskforce" ? "Taskforce · Editor" : "Member"}
           </div>
         </div>
-      </div>
+      </Link>
     </aside>
   );
 }
